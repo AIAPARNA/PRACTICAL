@@ -1,0 +1,267 @@
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'Abcd@1234!';
+
+
+
+Step 1: Install MySQL Server on Ubuntu
+
+First, make sure MySQL is installed on your machine.
+
+# Update package lists
+sudo apt update
+
+# Install MySQL server
+sudo apt install mysql-server
+
+# Start the MySQL service
+sudo systemctl start mysql
+
+# Secure the MySQL installation
+sudo mysql_secure_installation              // this step is not required
+
+
+
+
+
+Step 2: Install Python and MySQL Connector
+
+You need the MySQL connector library for Python.
+
+# Update package lists
+sudo apt update
+
+# Install Python 3 and pip if they are not installed
+sudo apt install python3 python3-pip
+
+# Install the MySQL connector for Python
+pip3 install mysql-connector-python
+
+
+
+
+
+
+
+
+
+
+
+
+
+Step 3: Create the Employee Database and Table in MySQL
+
+Now that MySQL is installed, log into MySQL and create a database and table for employee records.
+
+# Log into MySQL as root
+sudo mysql -u root -p
+
+# Create a new database
+CREATE DATABASE employee_db;
+
+# Use the database
+USE employee_db;
+
+# Create the employees table
+CREATE TABLE employees (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    job_title VARCHAR(50) NOT NULL,
+    department VARCHAR(50) NOT NULL,
+    salary DECIMAL(10, 2) NOT NULL
+);
+
+# Exit MySQL
+EXIT;
+
+
+
+
+
+
+
+
+Step 4: Python Code for Employee Management (CRUD Operations)
+
+Now, let's write a Python script to perform basic CRUD (Create, Read, Update, Delete) operations on the employee database.
+
+Create a new Python file, say employee_management.py:
+
+--------------------------python code   (employee_management.py)    -------------------------
+import mysql.connector
+
+# Establish MySQL connection
+def create_connection():
+    return mysql.connector.connect(
+        host="localhost",      //tells Python where the MySQL server is //running (here, on your local computer).
+
+        user="root",
+        password="Abcd@1234!",  # Replace with your MySQL root password
+        database="employee_db"
+    )
+
+# Function to add a new employee
+def add_employee(first_name, last_name, job_title, department, salary):
+    conn = create_connection()
+    cursor = conn.cursor()   //cursor ? is the object you’ll use to send //SQL commands and receive results.
+
+    query = """INSERT INTO employees (first_name, last_name, job_title, department, salary)
+               VALUES (%s, %s, %s, %s, %s)"""
+    cursor.execute(query, (first_name, last_name, job_title, department, salary))
+
+    conn.commit() // permanently saves all the changes (INSERT, UPDATE, //DELETE) you made during the current transaction.
+    cursor.close()
+    conn.close()
+    print(f"Employee {first_name} {last_name} added successfully!")
+
+# Function to update employee details
+def update_employee(employee_id, first_name, last_name, job_title, department, salary):
+    conn = create_connection()
+    cursor = conn.cursor()
+
+    query = """UPDATE employees
+               SET first_name = %s, last_name = %s, job_title = %s, department = %s, salary = %s
+               WHERE id = %s"""
+    cursor.execute(query, (first_name, last_name, job_title, department, salary, employee_id))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+    print(f"Employee ID {employee_id} updated successfully!")
+
+
+
+# Function to fetch employee details by ID
+def get_employee_by_id(employee_id):
+    conn = create_connection()
+    cursor = conn.cursor()
+
+    query = """SELECT * FROM employees WHERE id = %s"""
+    cursor.execute(query, (employee_id,))
+    result = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    if result:
+        print(f"Employee ID: {result[0]}")
+        print(f"Name: {result[1]} {result[2]}")
+        print(f"Job Title: {result[3]}")
+        print(f"Department: {result[4]}")
+        print(f"Salary: ${result[5]:,.2f}")
+    else:
+        print(f"No employee found with ID {employee_id}")
+
+# Function to list all employees
+def list_all_employees():
+    conn = create_connection()
+    cursor = conn.cursor()
+
+    query = "SELECT * FROM employees"
+    cursor.execute(query)
+    results = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    if results:
+        for row in results:
+            print(f"ID: {row[0]}, Name: {row[1]} {row[2]}, Job Title: {row[3]}, Department: {row[4]}, Salary: ${row[5]:,.2f}")
+    else:
+        print("No employees found.")
+
+# Function to delete an employee
+def delete_employee(employee_id):
+    conn = create_connection()
+    cursor = conn.cursor()
+
+    query = "DELETE FROM employees WHERE id = %s"
+    cursor.execute(query, (employee_id,))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+    print(f"Employee ID {employee_id} deleted successfully!")
+
+# Example of how to use the functions
+if __name__ == "__main__":
+    while True:
+        print("\nEmployee Management System")
+        print("1. Add Employee")
+        print("2. Update Employee")
+        print("3. View Employee")
+        print("4. List All Employees")
+        print("5. Delete Employee")
+        print("6. Exit")
+
+        choice = input("Choose an option: ")
+
+        if choice == "1":
+            first_name = input("First Name: ")
+            last_name = input("Last Name: ")
+            job_title = input("Job Title: ")
+            department = input("Department: ")
+            salary = float(input("Salary: "))
+            add_employee(first_name, last_name, job_title, department, salary)
+
+        elif choice == "2":
+            employee_id = int(input("Employee ID: "))
+            first_name = input("First Name: ")
+            last_name = input("Last Name: ")
+            job_title = input("Job Title: ")
+            department = input("Department: ")
+            salary = float(input("Salary: "))
+            update_employee(employee_id, first_name, last_name, job_title, department, salary)
+
+        elif choice == "3":
+            employee_id = int(input("Employee ID: "))
+            get_employee_by_id(employee_id)
+
+        elif choice == "4":
+            list_all_employees()
+
+        elif choice == "5":
+            employee_id = int(input("Employee ID: "))
+            delete_employee(employee_id)
+
+        elif choice == "6":
+            print("Exiting...")
+            break
+
+        else:
+            print("Invalid choice, please try again.")
+
+
+
+
+
+
+
+
+Step 5: Run the Python Script
+
+Once the script is ready, you can run the employee management system using the following command:
+
+python3 employee_management.py
+
+
+
+
+
+
+
+
+
+Option 1: Update the Authentication Method for the root User
+
+If you want to continue using the root user with a password, follow these steps:
+
+Log into MySQL as the root user using sudo (because root uses auth_socket by default).
+
+sudo mysql -u root  -- connect with assword first - ubuntu is password... then it willl connect and mysql will start. then change password.
+
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'Abcd@1234!';
+FLUSH PRIVILEGES;
+
+
+
+
